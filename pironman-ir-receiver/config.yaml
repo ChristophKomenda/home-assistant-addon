@@ -1,5 +1,5 @@
 name: Pironman IR Receiver
-version: "0.1.1"
+version: "0.2.0-dev"
 slug: pironman-ir-receiver
 description: Receive IR signals from the Pironman 5 Max for Home Assistant and HAIR
 url: https://github.com/ChristophKomenda/home-assistant-addon
@@ -14,7 +14,9 @@ devices:
   - /dev/lirc0
 options:
   receiver_id: pironman5-max
+  event_mode: standalone
   debug: false
 schema:
   receiver_id: str
+  event_mode: list(standalone|pironman5)
   debug: bool
