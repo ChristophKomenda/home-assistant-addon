@@ -279,3 +279,11 @@ permissions or native HAIR decoding on actual Home Assistant OS.
 **Status:** Successfully tested on Home Assistant Container
 and independently validated on Home Assistant OS.
 SunFounder is not maintaining this add-on; see community listing PR #27.
+
+## License and attribution
+
+Original contributions by Christoph Komenda in this add-on are available under
+the [MIT License](LICENSE), to the extent of his rights. Reuse is permitted,
+including by SunFounder, provided the applicable copyright and license notices
+are retained. See [copyright and license scope](COPYRIGHT.md) for exclusions,
+third-party rights, and the distinction from the upstream SunFounder fork.
