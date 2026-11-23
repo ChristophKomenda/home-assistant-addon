@@ -1,0 +1,70 @@
+name: Check SunFounder upstream
+
+on:
+  schedule:
+    - cron: '23 5 * * *' # Daily (UTC); scheduled workflows may be delayed.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sunfounder-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  propose-upstream-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out community repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Fetch SunFounder upstream
+        run: |
+          git remote add upstream https://github.com/sunfounder/home-assistant-addon.git
+          git fetch --no-tags upstream main
+          git fetch --no-tags origin main
+
+      - name: Propose upstream changes without merging into main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='sync/sunfounder-upstream'
+
+          # Nothing to propose if upstream/main is already part of our main history.
+          if git merge-base --is-ancestor upstream/main origin/main; then
+            echo 'No new SunFounder commits to sync.'
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C "$branch" origin/main
+
+          # On conflicts, fail visibly instead of overriding community changes.
+          if ! git merge --no-edit upstream/main; then
+            git merge --abort || true
+            echo '::error::Upstream merge conflict. Review and sync manually; main was not changed.'
+            exit 1
+          fi
+
+          # Keep the bot-owned sync branch current; never force-push main.
+          git push --force-with-lease origin "HEAD:refs/heads/$branch"
+
+          pr_number=$(gh pr list --head "$branch" --base main --state open --json number --jq '.[0].number')
+          if [[ -n "$pr_number" ]]; then
+            echo "Updated existing upstream sync PR #$pr_number"
+          else
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title 'chore: review new SunFounder upstream changes' \
+              --body $'## Summary\n\nThis automated PR proposes the latest commits from `sunfounder/home-assistant-addon` for manual review. **It is not automatically merged.**\n\n## Before merging\n\n- [ ] Review changes to original SunFounder add-ons and workflows.\n- [ ] Preserve community repository branding, `repository.json`, and the IR receiver add-on.\n- [ ] Run the IR unit tests and check HAOS installation instructions.\n- [ ] Confirm no unexpected permissions or hardware access changes.\n\nA failed scheduled workflow may indicate a merge conflict or insufficient GitHub Actions permissions.'
+          fi
