@@ -23,7 +23,37 @@ This is **receive-only**. It does not turn the IR receiver into a transmitter.
   the user's installation; do not change boot partitions blindly.
 - HAIR installed if learning remotes is desired.
 
-## Testing the development version (v0.1.1)
+## Recommended: use the existing Pironman 5 HACS integration (no manual copying)
+
+For new installations, use the `pironman5` output mode with the maintained
+[Pironman 5 integration](https://github.com/ChristophKomenda/pironman5-homeassistant-container).
+This avoids installing the standalone `sunfounder_ir` custom component.
+
+1. Install **Pironman 5** from HACS and restart Home Assistant.
+2. Add/configure the Pironman 5 device using its reachable REST API (normally port `34001`).
+3. Under the Pironman 5 integration options enable the experimental IR receiver, and
+   set its **IR bridge device ID** to exactly the add-on `receiver_id`.
+4. Install **Pironman IR Receiver** from this community add-on repository, using:
+
+   ```yaml
+   receiver_id: pironman5-max
+   event_mode: pironman5
+   debug: false
+   ```
+
+5. Ensure the Pi's `gpio-ir` overlay is enabled and `/dev/lirc0` exists. Start the add-on.
+6. Select the **Pironman 5** IR receiver in HAIR > Sniffer.
+
+**Compatibility:** `event_mode: standalone` remains the default for users of the
+older `sunfounder_ir` companion. Do not enable both custom IR receiver
+integrations for the same physical device. The built-in IR receiver is currently
+validated on **Pironman 5 Max** only. HAOS's GPIO overlay is still a host-level
+prerequisite; the add-on cannot automatically guarantee this step.
+
+**Development status:** This no-copy pairing requires independent HAOS end-to-end
+validation before it should be described as a verified installation path.
+
+## Legacy standalone installation (v0.1.1)
 
 The experimental Pironman IR Receiver add-on is available
 for community testing from this independently maintained repository.
@@ -41,6 +71,7 @@ for community testing from this independently maintained repository.
 
    ```yaml
    receiver_id: pironman5-max
+   event_mode: standalone
    debug: true
    ```
 

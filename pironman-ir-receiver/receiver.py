@@ -22,6 +22,7 @@ from urllib.request import Request, urlopen
 
 EVENT = "sunfounder_ir_received"
 API_URL = "http://supervisor/core/api/events/" + EVENT
+EVENT_NAMES = {"standalone": "sunfounder_ir_received", "pironman5": "pironman5_ir_raw_received"}
 WORD = struct.Struct("=I")
 TYPE_MASK = 0xFF000000
 LENGTH_MASK = 0x00FFFFFF
@@ -94,7 +95,7 @@ def send_frames(token: str, pending: queue.Queue) -> None:
             pending.task_done()
 
 
-def listen(device: str, receiver_id: str, pending: queue.Queue) -> None:
+def listen(device: str, receiver_id: str, pending: queue.Queue, event_mode: str = "standalone") -> None:
     assembler = FrameAssembler()
     fd = os.open(device, os.O_RDONLY | os.O_NONBLOCK)
     buffer = b""
@@ -117,7 +118,8 @@ def listen(device: str, receiver_id: str, pending: queue.Queue) -> None:
                 timings = assembler.feed(value)
                 if timings:
                     LOG.debug("Captured IR frame (%d timings)", len(timings))
-                    payload = {"receiver_id": receiver_id, "timings": timings, "modulation": None}
+                    id_key = "device_id" if event_mode == "pironman5" else "receiver_id"
+                    payload = {id_key: receiver_id, "timings": timings, "modulation": None}
                     try:
                         pending.put_nowait(payload)
                     except queue.Full:
@@ -127,16 +129,21 @@ def listen(device: str, receiver_id: str, pending: queue.Queue) -> None:
 
 
 def main() -> int:
+    global API_URL
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     options_path = Path("/data/options.json")
     options = json.loads(options_path.read_text(encoding="utf-8"))
     receiver_id = str(options.get("receiver_id", "")).strip()
     debug = options.get("debug", False)
+    event_mode = options.get("event_mode", "standalone")
+    if event_mode not in EVENT_NAMES:
+        raise SystemExit("event_mode must be standalone or pironman5")
+    API_URL = "http://supervisor/core/api/events/" + EVENT_NAMES[event_mode]
     if type(debug) is not bool:
         raise SystemExit("debug option must be a boolean")
     if debug:
         LOG.setLevel(logging.DEBUG)
-    LOG.info("IR receiver: %s (debug=%s)", receiver_id, debug)
+    LOG.info("IR receiver: %s (event_mode=%s, debug=%s)", receiver_id, event_mode, debug)
     if not receiver_id or len(receiver_id) > 64 or any(ch.isspace() for ch in receiver_id):
         raise SystemExit("Configure a receiver_id containing 1-64 non-space characters")
     token = os.environ.get("SUPERVISOR_TOKEN", "")
@@ -151,7 +158,7 @@ def main() -> int:
     threading.Thread(target=send_frames, args=(token, pending), daemon=True).start()
     while not STOP.is_set():
         try:
-            listen(path, receiver_id, pending)
+            listen(path, receiver_id, pending, event_mode)
         except OSError as exc:
             if not STOP.is_set():
                 LOG.warning("LIRC receiver unavailable: %s", exc)

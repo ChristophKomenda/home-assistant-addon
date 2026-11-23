@@ -10,6 +10,12 @@ receiver = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(receiver)
 
 
+class TestEventModes(unittest.TestCase):
+    def test_modes_map_to_expected_events(self):
+        self.assertEqual(receiver.EVENT_NAMES["standalone"], "sunfounder_ir_received")
+        self.assertEqual(receiver.EVENT_NAMES["pironman5"], "pironman5_ir_raw_received")
+
+
 class TestFrames(unittest.TestCase):
     def test_short_frame_not_emitted(self):
         a = receiver.FrameAssembler()
