@@ -1,14 +1,15 @@
 # SunFounder Pironman 5 Max: standalone IR receiver for Home Assistant OS
 
-> **Experimental — successfully validated on Home Assistant Container and independently tested on Home Assistant OS.** This contribution is
-> an independently implemented feature for SunFounder's add-on repository. It
+> **Experimental — successfully validated on Home Assistant Container and independently tested on Home Assistant OS.** This independently maintained community add-on was proposed upstream in
+> [SunFounder PR #26](https://github.com/sunfounder/home-assistant-addon/pull/26),
+> but SunFounder declined adding it to their maintained add-ons. It
 > does not require `ChristophKomenda/pironman5-homeassistant-container`, its IR
 > host bridge, or its `pironman5` Home Assistant integration.
 
 This optional add-on reads the Pironman 5 Max's **built-in IR receiver on GPIO13**
 through the Linux LIRC MODE2 character device `/dev/lirc0`, and forwards raw
 pulse/space frames as `sunfounder_ir_received` events using the Home Assistant
-Supervisor token. An included **separate** Home Assistant integration exposes a
+Supervisor token. An included **separately installed** Home Assistant integration exposes a
 native `InfraredReceiverEntity`, suitable for HAIR's Sniffer.
 
 This is **receive-only**. It does not turn the IR receiver into a transmitter.
@@ -25,7 +26,7 @@ This is **receive-only**. It does not turn the IR receiver into a transmitter.
 ## Testing the development version (v0.1.1)
 
 The experimental Pironman IR Receiver add-on is available
-for community testing before the official SunFounder release.
+for community testing from this independently maintained repository.
 
 ### Installation
 
@@ -74,10 +75,10 @@ Home Assistant OS versions is welcome.
 
 ---
 
-## Install (once the PR is merged into the SunFounder add-on repository)
+## Installation checklist for this community repository
 
-1. In **Settings > Add-ons / Apps > Add-on Store**, add the official SunFounder
-   repository `https://github.com/sunfounder/home-assistant-addon` if needed.
+1. In **Settings > Add-ons / Apps > Add-on Store**, add the community
+   repository `https://github.com/ChristophKomenda/home-assistant-addon`.
 2. Install **Pironman IR Receiver**. This is separate from the main Pironman 5
    Max add-on, so existing fan, RGB and display operations are unaffected.
 3. Confirm `/dev/lirc0` exists. The app requires this device to start.
@@ -197,8 +198,9 @@ The Home Assistant OS test was independently performed by a
 community member. Additional OS versions, hardware revisions,
 and long-term reliability remain to be validated.
 
-The contribution is open for SunFounder review and remains
-experimental until an official release.
+SunFounder declined upstream maintenance in PR #26 and proposed a
+community listing in PR #27. This add-on remains experimental and
+independently maintained in this repository.
 
 
 ## Diagnostics: optional debug logging
@@ -237,11 +239,12 @@ permissions or native HAIR decoding on actual Home Assistant OS.
 
 ## Project status and links
 
-- [Official SunFounder PR #26](https://github.com/sunfounder/home-assistant-addon/pull/26)
+- [SunFounder PR #26 — upstream submission declined](https://github.com/sunfounder/home-assistant-addon/pull/26)
+- [SunFounder PR #27 — community listing proposal](https://github.com/sunfounder/home-assistant-addon/pull/27)
 - [Development repository](https://github.com/ChristophKomenda/home-assistant-addon)
 - [Community testing discussion](https://github.com/ChristophKomenda/pironman5-homeassistant-container/discussions/16)
 - [HAIR](https://github.com/Anirudh-G/HAIR)
 
 **Status:** Successfully tested on Home Assistant Container
 and independently validated on Home Assistant OS.
-Official SunFounder review and release are still pending.
+SunFounder is not maintaining this add-on; see community listing PR #27.

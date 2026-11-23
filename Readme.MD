@@ -1,229 +1,117 @@
-# SunFounder Addon for Home assistant
+<div align="center">
 
-- [SunFounder Addon for Home assistant](#sunfounder-addon-for-home-assistant)
-  - [Pironman Addon](#pironman-addon)
-    - [Tutorial](#tutorial)
-      - [Setup config.txt](#setup-configtxt)
-      - [Install the Addon](#install-the-addon)
-        - [Click the button below to install the addon](#click-the-button-below-to-install-the-addon)
-        - [Or install it manually:](#or-install-it-manually)
-      - [Setup](#setup)
-      - [Configure](#configure)
-  - [Development](#development)
-    - [Cleanup image cache](#cleanup-image-cache)
-    - [Login the running addon container for debgging](#login-the-running-addon-container-for-debgging)
-    - [Run the image if it's not running as error occurred](#run-the-image-if-its-not-running-as-error-occurred)
-    - [Home Assistant Supervisor log](#home-assistant-supervisor-log)
-    - [App Armor](#app-armor)
-  - [准备工作](#准备工作)
-    - [安装 Docker Buildx](#安装-docker-buildx)
-    - [安装 QEMU 仿真器](#安装-qemu-仿真器)
-  - [Publish](#publish)
-    - [登录](#登录)
-    - [编译并上传](#编译并上传)
+# Pironman 5 Max — IR Receiver for Home Assistant
 
+**Community-maintained Home Assistant OS add-on · Native infrared reception · HAIR support**
 
-## Pironman Addon
+Use the **built-in IR receiver on GPIO13** of the SunFounder Pironman 5 Max in Home Assistant, without extra IR receiver hardware. Infrared signals are captured locally via LIRC, forwarded as Home Assistant events and exposed by a separate companion integration as a native `InfraredReceiverEntity`.
 
-### Tutorial
+[**Quick start**](#quick-start-home-assistant-os) · [**Full installation guide**](pironman-ir-receiver/README.md) · [**Testing**](#tested-environments) · [**Troubleshooting**](pironman-ir-receiver/README.md#diagnostics-optional-debug-logging) · [**Support**](#support-and-contributions)
 
-#### Setup config.txt
+</div>
 
-You need to setup config.txt to enable I2C and SPI for Pironman.
+> [!IMPORTANT]
+> **Independent community project.** This repository is maintained by [@ChristophKomenda](https://github.com/ChristophKomenda), not by SunFounder. SunFounder [PR #26](https://github.com/sunfounder/home-assistant-addon/pull/26) was not accepted for upstream maintenance; [PR #27](https://github.com/sunfounder/home-assistant-addon/pull/27) proposes linking this independently maintained add-on from the official README. PR #27 is a community listing, **not** an official SunFounder release or endorsement.
 
-> This only works for Home Assistant OS, running on Raspberry Pi. Not for Home Assistant Container.
+## At a glance
 
-You will need:
+| | |
+| --- | --- |
+| **Hardware** | SunFounder Pironman 5 Max with built-in IR receiver on GPIO13 |
+| **Deployment** | Home Assistant OS (HAOS) on Raspberry Pi 5, aarch64 |
+| **Minimum Home Assistant Core** | 2026.6.0 (native infrared receiver platform required) |
+| **Add-on version** | 0.1.1 (experimental; check `pironman-ir-receiver/config.yaml`) |
+| **Device** | `/dev/lirc0` (must exist before starting the add-on) |
+| **Companion integration** | `sunfounder_ir`, installed **manually** into `/config/custom_components/` |
+| **Optional experience** | [HAIR Sniffer](https://github.com/Anirudh-G/HAIR) for learning IR signals |
+| **Data flow** | Fully local; no MQTT, cloud or public TCP port required |
 
- - SD card reader
- - SD card with Home Assistant Operating System flashed on it
+**Receive-only:** This add-on cannot transmit IR signals. Successfully capturing codes in HAIR does not mean the Pironman can send those codes back to other devices.
 
-Shutdown/turn-off your Home Assistant installation and unplug the SD card. Plug the SD card into an SD card reader and find a drive/file system named `hassos-boot`. The file system might be shown/mounted automatically. If not, use your operating systems disk management utility to find the SD card reader and make sure the first partition is available.
+## Why this add-on?
 
-- In the root of the `hassos-boot` partition, **add a new folder called** `CONFIG`.
-- In the `CONFIG` folder, **add another new folder called** `modules`.
-- Inside the `modules` folder, **add a text file called** `rpi-i2c.conf` with the following content:
+- **Use hardware you already own:** Receive IR signals through the Pironman 5 Max's integrated receiver.
+- **Works with Home Assistant's infrared platform:** The separate custom integration creates an `InfraredReceiverEntity`, usable in HAIR Sniffer.
+- **Local by design:** LIRC frames are delivered to Home Assistant using its Supervisor API; no cloud account or MQTT broker.
+- **Focused permissions:** The add-on maps `/dev/lirc0` rather than requesting blanket privileged hardware access.
+- **Community-tested:** End-to-end IR capture was verified locally with Home Assistant Container and independently on HAOS (see below).
+
+## Quick start (Home Assistant OS)
+
+> [!CAUTION]
+> This procedure is for **Pironman 5 Max on HAOS**, with `/dev/lirc0` already available. Kernel overlays and boot-file locations differ by installation. Do not edit or reflash a boot partition without first verifying the correct procedure and making a backup. The add-on will not start without the expected LIRC device.
+
+1. In Home Assistant, open **Settings → Add-ons / Apps → Add-on Store → Repositories** (menu wording varies by HA version).
+2. Add the community repository URL:
+
+   ```text
+   https://github.com/ChristophKomenda/home-assistant-addon
    ```
-   i2c-dev
-   ```
-- In the root of the `hassos-boot` partition, **edit the file called** `config.txt` **add four lines** to the bottom:
-   ```
-   dtparam=i2c_vc=on
-   dtparam=i2c_arm=on
-   dtoverlay=gpio-poweroff,gpio_pin=26,active_low=0
-   dtoverlay=gpio-ir,gpio_pin=13
-   ```
-- To enable RGB, selected one driver and make sure you set up the main board respectivly. continue editing the `config.txt` file:
-   > Earlier version of pironman only have one driver, PWM(GPIO12).
-   - For PWM(GPIO12), it use audio to drive the led, so turn off the audio.
-      ```
-      dtparam=audio=off
-      ```
-   - For SPI(GPIO10), it use spi to drive the led, so turn on the spi, set core freq to 500. Enable audio if you need it.
-      ```
-      dtparam=spi=on
-      core_freq=500
-      core_freq_min=500
-      # Enable audio if you need it.
-      dtparam=audio=on
-      ```
-   - For PCM(GPIO21), it use PCM to drive the led, it doesn't need to set anything. But it will interfer with I2S device, so make sure you disable them, like hifiberry-dac or i2s-mmap. Enable audio if you need it.
-      ```
-      # Enable audio if you need it.
-      dtparam=audio=on
-      # Comment out the i2s device.
-      # dtoverlay=hifiberry-dac
-      # dtoverlay=i2s-mmap
-      ```
-- Eject the SD card and plug it back into your Raspberry Pi and boot it up.
 
-#### Install the Addon
+3. Refresh the store, install **Pironman IR Receiver**, and verify that the installed version matches the [current add-on configuration](pironman-ir-receiver/config.yaml).
+4. Set the add-on options (for example `receiver_id: pironman5-max`; leave `debug: false` unless troubleshooting), then start it and check logs.
+5. **Install the companion integration separately:** Copy [`pironman-ir-receiver/ha_custom_component/sunfounder_ir/`](pironman-ir-receiver/ha_custom_component/sunfounder_ir/) to Home Assistant's `/config/custom_components/sunfounder_ir/` and restart Home Assistant. The add-on **does not** install the integration automatically.
+6. Go to **Settings → Devices & Services → Add Integration → SunFounder IR Receiver** and use the **same receiver ID** as in the add-on.
+7. If you use HAIR, open **HAIR → Sniffer**, select **SunFounder IR Receiver**, and press a button on an IR remote.
 
-##### Click the button below to install the addon
+**Full instructions and troubleshooting:** [Pironman IR Receiver README](pironman-ir-receiver/README.md). If the add-on refuses to start, verify `/dev/lirc0` exists and that no conflicting service is consuming the receiver.
 
-[![Open your Home Assistant instance and show the dashboard of a Supervisor add-on.](https://my.home-assistant.io/badges/supervisor_addon.svg)](https://my.home-assistant.io/redirect/supervisor_addon/?addon=6fa7f6d2_pironman&repository_url=https%3A%2F%2Fgithub.com%2Fsunfounder%2Fhome-assistant-addon)
+> [!NOTE]
+> If you also use the [Pironman 5 HACS integration](https://github.com/ChristophKomenda/pironman5-homeassistant-container), disable its optional experimental IR receiver for that hardware before using this standalone add-on. Both implementations should not compete for the same LIRC device. This standalone add-on does not otherwise depend on the HACS integration.
 
-##### Or install it manually:
+## Architecture
 
-1. On Home Assistant, navigator to Configuration -> Addons -> Addon Store
-2. Click the top right corner button to open the menu, select Repositories
-3. Type in the repository url: `https://github.com/sunfounder/home-assistant-addon`, click Add
-4. After **SunFounder** repository added, close the popup window
-5. Click the top right corner button again to open the menu, select **Reload**
-6. Wait a few seconds, the **SunFounder** repository will show up in the addon store with Pironman following. If not, try to refresh the page.
-7. Click on Pironman, then click Install.
-
-#### Setup
-
-Currently, you need to disable protection mode to allow the addon to access hardware informations.
-
-To do so, in Pironman addon page, (Configuration -> Addons -> Pironman). Find Protection Mode, and turn it off. Then, restart the addon.
-
-Change to the Log tab, and see if there's any error. If not, you can continue to the next step.
-
-#### Configure
-
-You can change the configuration in the Configuration tab. Navigate to Configuration tab, and change the settings.
-
-
-
-## Development
-
-Development instruction for addon developer.
-
-### Cleanup image cache
-
-Image may not be updated after rebuild. To force rebuild, you need to clean up the image cache.
-uninstall the addon first, then run the following command to clean up the image cache.
-
-```
-docker image prune -af
+```text
+IR remote
+   │
+   ▼
+Pironman 5 Max GPIO13 → /dev/lirc0 (LIRC)
+   │
+   ▼
+Pironman IR Receiver (HAOS add-on)
+   │  local Supervisor API: sunfounder_ir_received
+   ▼
+Home Assistant event bus
+   │
+   ▼
+sunfounder_ir (separate custom integration)
+   │
+   ▼
+InfraredReceiverEntity → HAIR Sniffer (optional)
 ```
 
-### Login the running addon container for debgging
+## Tested environments
 
-Find the container name
-```
-docker ps
-```
+| Environment | Result | Evidence |
+| --- | --- | --- |
+| Raspberry Pi 5 / Pironman 5 Max / Debian / Home Assistant Container | IR reception and native entity shown in HAIR | [Technical details](pironman-ir-receiver/README.md#live-end-to-end-validation-on-home-assistant-container-21-november-2026) |
+| Pironman 5 Max / HAOS 18.5 / Home Assistant Core 2026.11.2 | Independently reported end-to-end success, including real remote capture | [Community test](https://github.com/ChristophKomenda/pironman5-homeassistant-container/discussions/16) |
 
-replace the `<container_name>` in the following command
-```
-docker exec -it <container_name> /bin/bash
-```
+The independent HAOS test was reported by [@eugenioparise](https://github.com/eugenioparise) on **November 21, 2026**. Broader hardware compatibility, LIRC device paths other than `/dev/lirc0`, and long-term reliability remain unverified.
 
-### Run the image if it's not running as error occurred
+## Related projects and upstream status
 
-``` bash
-# List all images
-docker images
+- **This repository:** Independently maintained experimental **HAOS add-on and `sunfounder_ir` companion integration**.
+- **[Pironman 5 HACS integration](https://github.com/ChristophKomenda/pironman5-homeassistant-container):** Separate hardware monitoring/control integration with an optional *different* IR host bridge for Home Assistant Container. Not required for this add-on.
+- **[SunFounder PR #26](https://github.com/sunfounder/home-assistant-addon/pull/26):** Standalone add-on submission; SunFounder declined upstream maintenance.
+- **[SunFounder PR #27](https://github.com/sunfounder/home-assistant-addon/pull/27):** Proposed community add-on listing in SunFounder's README. Managed independently here; not an official SunFounder-maintained add-on.
 
-# Run the image
-docker run -it <image_name>:<tag> /bin/bash
-```
+This fork retains other SunFounder add-on directories for compatibility with its upstream structure. For **official SunFounder-maintained add-ons**, prefer [SunFounder's repository](https://github.com/sunfounder/home-assistant-addon). This community repository primarily focuses on the experimental Pironman IR Receiver.
 
-### Home Assistant Supervisor log
+## Support and contributions
 
-See supervisor log for appon reflash and install errors
+- **Installation or IR receiver issue:** [Open an issue in this repository](https://github.com/ChristophKomenda/home-assistant-addon/issues).
+- **Community testing and feedback:** [Discussion and independent HAOS test](https://github.com/ChristophKomenda/pironman5-homeassistant-container/discussions/16).
+- **Debugging:** [IR troubleshooting and logs](pironman-ir-receiver/README.md#diagnostics-optional-debug-logging).
 
-```
-docker logs hassio_supervisor -f
-```
+When reporting a problem, include your Pironman model, HAOS and Home Assistant Core versions, whether `/dev/lirc0` exists, add-on version, companion integration status and **redacted** log excerpts. Never share access tokens or private configuration data.
 
-### App Armor
-
-Check if complain enabled
-
-```
-docker inspect addon_local_pironman | grep "AppArmorProfile"
-```
-
-## 准备工作
-
-如果你需要在windows 要在 x86_64 架构的 Linux 主机上编译 aarch64（ARM64）架构的 Docker 镜像，需要使用 Docker Buildx 和 QEMU 跨架构仿真技术。以下是详细的操作步骤：
-
-### 安装 Docker Buildx
-
-首先，确保你的 Linux 主机上已经安装了 Docker。如果没有安装，可以参考 Docker 官方文档进行安装。
-
-安装 Docker Buildx 插件：
+Contributions and additional independent hardware test reports are welcome. For IR-specific changes, tests can be run with:
 
 ```bash
-
-# 启用 Buildx
-docker buildx install
-
-# 创建并使用支持多架构的 builder
-docker buildx create --name multiarch --use
+python3 -m unittest discover -s pironman-ir-receiver/tests -v
 ```
 
-### 安装 QEMU 仿真器
+---
 
-QEMU 是一个开源的虚拟机模拟器，可以用于在 x86_64 架构的 Linux 主机上运行 ARM64 架构的虚拟机。
-
-```bash
-# 安装 QEMU 静态二进制文件
-docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-```
-
-## Publish
-
-可以在Windows下执行，但是需要安装Docker Desktop, 然后打开软件，登录，看到左下角显示Engine running.
-
-### 登录
-
-登录docker。如果在Windows下，在Docker Desktop上登录，可以省略这一步。
-
-```bash
-docker login
-```
-
-### 编译并上传
-
-进入需要编译的插件根目录下，执行以下命令：
-注意修改名称和版本号。注意确认基础镜像的版本号。
-
-```bash
-docker buildx build --platform linux/arm64/v8 --build-arg BUILD_FROM=ghcr.io/hassio-addons/ubuntu-base/aarch64:10.0.5 -t sunfounder/aarch64-pironman5:1.2.12 --push .
-docker buildx build --platform linux/arm64/v8 --build-arg BUILD_FROM=ghcr.io/hassio-addons/ubuntu-base/aarch64:10.0.5 -t sunfounder/aarch64-pi-config-wizard:1.0.3 --push .
-```
-
-> [!WARNING]
-> 如果报错：
-> ```bash
-> ERROR: error during connect: this error may indicate that the docker daemon is not running: Head "http://%2F%2F.%2Fpipe%2Fdocker_engine/_ping": open //./pipe/docker_engine: The system cannot find the file specified.
-> ```
-> 请先启动docker desktop，然后再执行上面的命令。
-
-
-> [!WARNING]
-> 如果报错：
-> ```bash
-> denied: requested access to the resource is denied
-> ```
-> 请检查是否登录成功, Windows 下打开 Docker Desktop。
-> 如果是Linux下运行命令登录：
-> ```bash
-> docker login
-> ```
-> 登录成功后，再执行上面的命令。
+*Community-maintained by [Christoph Komenda](https://github.com/ChristophKomenda). Not affiliated with or officially supported by SunFounder.*
