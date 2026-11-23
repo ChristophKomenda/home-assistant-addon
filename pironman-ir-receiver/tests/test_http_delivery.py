@@ -55,3 +55,45 @@ class TestHttpDelivery(unittest.TestCase):
             server.shutdown()
             server.server_close()
             thread.join(timeout=5)
+
+    # HAOS event-mode HTTP regression test
+    def test_pironman_mode_posts_to_correct_endpoint_with_device_id(self):
+        """Test real HTTP delivery to a mock Supervisor endpoint in pironman5 mode."""
+        server = ThreadingHTTPServer(("127.0.0.1", 0), EventHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        previous_url = receiver.API_URL
+        receiver.API_URL = (
+            f"http://127.0.0.1:{server.server_port}/core/api/events/"
+            + receiver.EVENT_NAMES["pironman5"]
+        )
+        receiver.STOP.clear()
+        pending = queue.Queue()
+        pending.put(receiver.make_event_payload("pironman5-max", [500, -500] * 5, "pironman5"))
+        sender = threading.Thread(target=receiver.send_frames, args=("test-token", pending), daemon=True)
+        try:
+            sender.start()
+            path, authorization, data = EventHandler.received.get(timeout=5)
+            self.assertEqual(path, "/core/api/events/pironman5_ir_raw_received")
+            self.assertEqual(authorization, "Bearer test-token")
+            self.assertEqual(data["device_id"], "pironman5-max")
+            self.assertNotIn("receiver_id", data)
+            self.assertEqual(data["timings"], [500, -500] * 5)
+            self.assertIsNone(data["modulation"])
+        finally:
+            receiver.STOP.set()
+            sender.join(timeout=5)
+            receiver.API_URL = previous_url
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+    def test_legacy_payload_and_invalid_mode(self):
+        payload = receiver.make_event_payload("legacy", [600, -600] * 5, "standalone")
+        self.assertEqual(payload["receiver_id"], "legacy")
+        self.assertNotIn("device_id", payload)
+        self.assertEqual(receiver.event_url("standalone"), receiver.API_URL)
+        self.assertEqual(receiver.event_url("pironman5"),
+                         "http://supervisor/core/api/events/pironman5_ir_raw_received")
+        with self.assertRaises(ValueError):
+            receiver.make_event_payload("bad", [600, -600] * 5, "unsupported")

@@ -95,6 +95,19 @@ def send_frames(token: str, pending: queue.Queue) -> None:
             pending.task_done()
 
 
+def make_event_payload(receiver_id: str, timings: list[int], event_mode: str) -> dict:
+    """Build the payload expected by the chosen Home Assistant integration."""
+    if event_mode not in EVENT_NAMES:
+        raise ValueError(f"Unsupported event mode: {event_mode}")
+    id_key = "device_id" if event_mode == "pironman5" else "receiver_id"
+    return {id_key: receiver_id, "timings": timings, "modulation": None}
+
+
+def event_url(event_mode: str) -> str:
+    """Resolve the Supervisor Core event endpoint for an IR receiver mode."""
+    return "http://supervisor/core/api/events/" + EVENT_NAMES[event_mode]
+
+
 def listen(device: str, receiver_id: str, pending: queue.Queue, event_mode: str = "standalone") -> None:
     assembler = FrameAssembler()
     fd = os.open(device, os.O_RDONLY | os.O_NONBLOCK)
@@ -118,8 +131,7 @@ def listen(device: str, receiver_id: str, pending: queue.Queue, event_mode: str 
                 timings = assembler.feed(value)
                 if timings:
                     LOG.debug("Captured IR frame (%d timings)", len(timings))
-                    id_key = "device_id" if event_mode == "pironman5" else "receiver_id"
-                    payload = {id_key: receiver_id, "timings": timings, "modulation": None}
+                    payload = make_event_payload(receiver_id, timings, event_mode)
                     try:
                         pending.put_nowait(payload)
                     except queue.Full:
@@ -138,7 +150,7 @@ def main() -> int:
     event_mode = options.get("event_mode", "standalone")
     if event_mode not in EVENT_NAMES:
         raise SystemExit("event_mode must be standalone or pironman5")
-    API_URL = "http://supervisor/core/api/events/" + EVENT_NAMES[event_mode]
+    API_URL = event_url(event_mode)
     if type(debug) is not bool:
         raise SystemExit("debug option must be a boolean")
     if debug:
