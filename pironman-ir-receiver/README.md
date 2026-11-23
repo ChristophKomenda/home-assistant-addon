@@ -1,16 +1,16 @@
-# SunFounder Pironman 5 Max: standalone IR receiver for Home Assistant OS
+# Pironman 5 Max IR Receiver for Home Assistant OS
 
-> **Experimental — successfully validated on Home Assistant Container and independently tested on Home Assistant OS.** This independently maintained community add-on was proposed upstream in
+> **Community-maintained — independently validated on Home Assistant OS, including the new HACS-linked mode.** This independently maintained community add-on was proposed upstream in
 > [SunFounder PR #26](https://github.com/sunfounder/home-assistant-addon/pull/26),
-> but SunFounder declined adding it to their maintained add-ons. It
-> does not require `ChristophKomenda/pironman5-homeassistant-container`, its IR
-> host bridge, or its `pironman5` Home Assistant integration.
+> but SunFounder declined adding it to their maintained add-ons. The
+> default standalone mode does not require the Pironman 5 HACS integration;
+> the optional `pironman5` mode uses that integration directly.
 
 This optional add-on reads the Pironman 5 Max's **built-in IR receiver on GPIO13**
 through the Linux LIRC MODE2 character device `/dev/lirc0`, and forwards raw
-pulse/space frames as `sunfounder_ir_received` events using the Home Assistant
-Supervisor token. An included **separately installed** Home Assistant integration exposes a
-native `InfraredReceiverEntity`, suitable for HAIR's Sniffer.
+pulse/space frames using the Home Assistant Supervisor token. In `pironman5`
+mode, the existing HACS integration exposes the native `InfraredReceiverEntity`;
+in `standalone` mode, the separately installed `sunfounder_ir` companion does so.
 
 This is **receive-only**. It does not turn the IR receiver into a transmitter.
 
@@ -42,7 +42,9 @@ This avoids installing the standalone `sunfounder_ir` custom component.
    ```
 
 5. Ensure the Pi's `gpio-ir` overlay is enabled and `/dev/lirc0` exists. Start the add-on.
-6. Select the **Pironman 5** IR receiver in HAIR > Sniffer.
+6. If upgrading from `sunfounder_ir`, disable the old integration to avoid duplicate receivers.
+7. **Reload the Pironman 5 integration** after updating the add-on or changing IR mode.
+8. Select the **Pironman 5** IR receiver in HAIR > Sniffer.
 
 **Compatibility:** `event_mode: standalone` remains the default for users of the
 older `sunfounder_ir` companion. Do not enable both custom IR receiver
@@ -50,8 +52,17 @@ integrations for the same physical device. The built-in IR receiver is currently
 validated on **Pironman 5 Max** only. HAOS's GPIO overlay is still a host-level
 prerequisite; the add-on cannot automatically guarantee this step.
 
-**Development status:** This no-copy pairing requires independent HAOS end-to-end
-validation before it should be described as a verified installation path.
+**Independent HAOS validation (23 November 2026):**
+[@eugenioparise](https://github.com/eugenioparise) reported successful use
+of the `pironman5` event mode with the Pironman 5 HACS integration and HAIR.
+The previous `sunfounder_ir` integration was disabled, and **reloading the
+Pironman 5 integration** was necessary before HAIR worked. Only the Pironman
+5 integration's receiver appeared in HAIR. The tester also reported successful
+HAIR send functionality; **this GPIO receiver remains receive-only** and
+transmission requires separate compatible hardware.
+
+This is one successful independent installation; compatibility on other
+HAOS versions and hardware revisions remains to be tested.
 
 ## Legacy standalone installation (v0.1.1)
 
