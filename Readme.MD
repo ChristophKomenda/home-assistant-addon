@@ -6,12 +6,35 @@
 
 Community-maintained · Local IR reception · No external IR receiver required · **Receive-only**
 
+[![SunFounder community listing](https://img.shields.io/badge/SunFounder-community%20listed-blue)](https://github.com/sunfounder/home-assistant-addon#community-add-ons)
+[![HACS integration](https://img.shields.io/badge/HACS-default%20integration-41BDF5)](https://github.com/ChristophKomenda/pironman5-homeassistant-container)
+
+
 [**Install add-on repository**](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FChristophKomenda%2Fhome-assistant-addon) · [**Step-by-step setup**](#quick-start-recommended-setup) · [**Troubleshooting**](pironman-ir-receiver/README.md#diagnostics-optional-debug-logging) · [**Technical details**](pironman-ir-receiver/README.md)
 
 </div>
 
 > [!IMPORTANT]
 > **Independent community add-on — not maintained or officially supported by SunFounder.** This repository is a fork of [SunFounder's add-on repository](https://github.com/sunfounder/home-assistant-addon). It primarily maintains the **Pironman IR Receiver** add-on; for SunFounder's original add-ons, use their official repository. See [upstream status](#upstream-and-project-status).
+
+## At a glance
+
+| | |
+| --- | --- |
+| **Hardware** | Pironman 5 Max with built-in IR receiver |
+| **Platform** | Home Assistant OS (ARM64) |
+| **Recommended setup** | IR add-on v0.2.0+ and Pironman 5 HACS integration v1.5.0+ |
+| **Validation** | Independent HAOS and HAIR community testing |
+| **Recognition** | Listed in SunFounder's official repository via [merged PR #27](https://github.com/sunfounder/home-assistant-addon/pull/27) on November 24, 2026 |
+| **Privacy** | Local processing without cloud dependencies |
+| **IR capability** | Receive-only |
+
+**Choose your path:**
+
+- [New HAOS installation](#quick-start-recommended-setup)
+- [Existing standalone users](#which-mode-should-i-use)
+- [Home Assistant Container users](https://github.com/ChristophKomenda/pironman5-homeassistant-container/blob/main/docs/native-ir-hair.md)
+- [Compatibility and requirements](#before-you-start)
 
 ## What can I do with it?
 
@@ -100,7 +123,7 @@ Thanks to [@eugenioparise](https://github.com/eugenioparise) for independently t
 If the add-on does not start, **check `/dev/lirc0` first**. If it starts but HAIR sees no signals, check the exact receiver ID, `event_mode`, Pironman integration IR option, and whether you reloaded the integration. For more detailed log diagnostics, use the [full troubleshooting section](pironman-ir-receiver/README.md#diagnostics-optional-debug-logging).
 
 - [Detailed setup and historical standalone instructions](pironman-ir-receiver/README.md)
-- [Report an issue](https://github.com/ChristophKomenda/home-assistant-addon/issues)
+- [Report a problem in the community discussion](https://github.com/ChristophKomenda/pironman5-homeassistant-container/discussions/16)
 - [Discuss hardware testing](https://github.com/ChristophKomenda/pironman5-homeassistant-container/discussions/16)
 - [Release v0.2.0](https://github.com/ChristophKomenda/home-assistant-addon/releases/tag/pironman-ir-v0.2.0)
 - [Run automated add-on tests](pironman-ir-receiver/README.md#development-tests)
@@ -109,9 +132,78 @@ When reporting problems, include your device model, HAOS/Core versions, add-on v
 
 ## Upstream and project status
 
-SunFounder declined maintaining this add-on in [upstream PR #26](https://github.com/sunfounder/home-assistant-addon/pull/26). [PR #27](https://github.com/sunfounder/home-assistant-addon/pull/27) proposed listing it among community-maintained projects. This is **not** an official SunFounder add-on or endorsement.
+### Listed in SunFounder's official repository
+
+On November 24, 2026, SunFounder merged [PR #27](https://github.com/sunfounder/home-assistant-addon/pull/27), listing this independently maintained IR receiver in the [Community add-ons section of its official repository](https://github.com/sunfounder/home-assistant-addon#community-add-ons).
+
+The listing followed independent HAOS testing, technical collaboration and installation improvements based on maintainer feedback.
+
+| Milestone | Outcome |
+| --- | --- |
+| Community demand | Identified the need for native IR reception on HAOS |
+| Engineering | Developed a standalone IR receiver add-on |
+| Hardware validation | Independent HAOS and HAIR testing |
+| Maintainer feedback | Identified installation and maintenance concerns |
+| Installation UX | Removed manual companion integration installation in v0.2.0 |
+| Official documentation | SunFounder merged PR #27 |
+
+The original [upstream PR #26](https://github.com/sunfounder/home-assistant-addon/pull/26) was not merged.
+
+The project remains independently maintained. Its listing does not constitute official SunFounder support or endorsement.
 
 The add-on remains experimental, independently maintained and receive-only. Contributions and reports from additional physical HAOS installations are welcome.
+
+## Frequently asked questions
+
+<details>
+<summary><strong>Do I need to manually install a separate custom integration?</strong></summary>
+
+No. The recommended `pironman5` mode connects directly to the existing Pironman 5 HACS integration.
+
+Only the legacy standalone mode requires the separate `sunfounder_ir` component.
+
+</details>
+
+<details>
+<summary><strong>Can I transmit infrared commands to my TV?</strong></summary>
+
+No. The built-in receiver and this add-on are receive-only. Sending infrared commands requires separate compatible transmitter hardware.
+
+</details>
+
+<details>
+<summary><strong>Do I need this add-on for normal Pironman monitoring?</strong></summary>
+
+No. Hardware monitoring, fan control, RGB lighting and OLED controls do not require the IR receiver add-on.
+
+</details>
+
+<details>
+<summary><strong>Does this work with Home Assistant Container?</strong></summary>
+
+This add-on is intended for Home Assistant OS.
+
+Container users should follow the [native IR and HAIR documentation](https://github.com/ChristophKomenda/pironman5-homeassistant-container/blob/main/docs/native-ir-hair.md) and use the documented Linux host bridge.
+
+</details>
+
+<details>
+<summary><strong>Is this officially supported by SunFounder?</strong></summary>
+
+No. SunFounder lists this project in its official repository, but maintenance and support remain independent.
+
+</details>
+
+<details>
+<summary><strong>How can I contribute?</strong></summary>
+
+Additional hardware validation, reproducible bug reports and documentation improvements are welcome.
+
+Share your experience in the [community discussion](https://github.com/ChristophKomenda/pironman5-homeassistant-container/discussions/16).
+
+Never include access tokens or sensitive configuration data in public reports.
+
+</details>
 
 ## License and attribution
 
