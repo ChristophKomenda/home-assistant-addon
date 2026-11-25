@@ -12,6 +12,8 @@ Community-maintained · Local IR reception · No external IR receiver required �
 
 [**Install add-on repository**](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FChristophKomenda%2Fhome-assistant-addon) · [**Step-by-step setup**](#quick-start-recommended-setup) · [**Troubleshooting**](pironman-ir-receiver/README.md#diagnostics-optional-debug-logging) · [**Technical details**](pironman-ir-receiver/README.md)
 
+[![Add repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FChristophKomenda%2Fhome-assistant-addon)
+
 </div>
 
 > [!IMPORTANT]
@@ -212,3 +214,8 @@ Original contributions in [`pironman-ir-receiver/`](pironman-ir-receiver/) are M
 ---
 
 *Community-maintained by [Christoph Komenda](https://github.com/ChristophKomenda). Not affiliated with or officially supported by SunFounder.*
+
+<!-- github-growth-related-projects -->
+## Related projects
+
+- [**Home Assistant Community Apps**](https://github.com/ChristophKomenda/home-assistant-apps) — Central app catalog; runtime validation pending.
