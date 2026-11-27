@@ -138,6 +138,20 @@ When reporting problems, include your device model, HAOS/Core versions, add-on v
 
 On November 24, 2026, SunFounder merged [PR #27](https://github.com/sunfounder/home-assistant-addon/pull/27), listing this independently maintained IR receiver in the [Community add-ons section of its official repository](https://github.com/sunfounder/home-assistant-addon#community-add-ons).
 
+#### Official SunFounder community listing
+
+SunFounder's official documentation describes this project
+as a community-maintained IR receiver supporting HAIR,
+the recommended Pironman 5 HACS integration and the
+legacy standalone mode.
+
+> Independently tested on HAOS.
+
+**Source:** [SunFounder community add-ons — merged PR #27](https://github.com/sunfounder/home-assistant-addon/pull/27).
+
+The listing acknowledges the community project.
+Maintenance and support remain independent.
+
 The listing followed independent HAOS testing, technical collaboration and installation improvements based on maintainer feedback.
 
 | Milestone | Outcome |
